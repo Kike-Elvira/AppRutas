@@ -181,7 +181,6 @@ const App = () => {
         {
           text: "OK",
           onPress: () => {
-            setDestinations([]); // Limpiar destinos anteriores
             setIsSelectingDestinations(true);
           },
         },
