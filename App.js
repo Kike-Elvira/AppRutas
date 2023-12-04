@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Alert, View, Text, TextInput, Button } from "react-native";
+import { Alert, View, Text, TextInput, Button, Platform } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import MapViewDirections from "react-native-maps-directions";
@@ -56,30 +56,50 @@ const App = () => {
   const borrarDestino = () => {
     const opciones = destinations.map((destino) => destino.nombre);
     opciones.push("Cancelar");
-
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: opciones,
-        cancelButtonIndex: opciones.length - 1,
-      },
-      (buttonIndex) => {
-        if (buttonIndex !== opciones.length - 1) {
-          const nuevosDestinos = [...destinations];
-          nuevosDestinos.splice(buttonIndex, 1);
-          setDestinations(nuevosDestinos);
-
-          // Recalcular la ruta óptima
-          const rutaOptimaCalculada = calcularRutaOptima(
-            {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            },
-            nuevosDestinos
-          );
-          setRutaOptima(rutaOptimaCalculada);
+  
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: opciones,
+          cancelButtonIndex: opciones.length - 1,
+        },
+        (buttonIndex) => {
+          if (buttonIndex !== opciones.length - 1) {
+            borrarDestinoSeleccionado(buttonIndex);
+          }
         }
-      }
+      );
+    } else {
+      Alert.alert(
+        "Borrar destino",
+        "Elige el destino que quieres borrar",
+        [...opciones.map((opcion, index) => ({
+          text: opcion,
+          onPress: () => borrarDestinoSeleccionado(index),
+        })), {
+          text: "Cancelar",
+          onPress: () => {},
+          style: "cancel"
+        }],
+        { cancelable: true }
+      );
+    }
+  };
+  
+  const borrarDestinoSeleccionado = (index) => {
+    const nuevosDestinos = [...destinations];
+    nuevosDestinos.splice(index, 1);
+    setDestinations(nuevosDestinos);
+  
+    // Recalcular la ruta óptima
+    const rutaOptimaCalculada = calcularRutaOptima(
+      {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      },
+      nuevosDestinos
     );
+    setRutaOptima(rutaOptimaCalculada);
   };
   const calcularDistanciaTotal = (ruta) => {
     let distanciaTotal = 0;
